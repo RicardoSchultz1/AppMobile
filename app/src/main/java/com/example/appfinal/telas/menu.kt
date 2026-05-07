@@ -35,7 +35,11 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun menu(onVoltar: () -> Unit) {
+fun menu(
+    userId: Int,
+    onNovaViagem: () -> Unit,
+    onVoltar: () -> Unit
+) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -56,7 +60,7 @@ fun menu(onVoltar: () -> Unit) {
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
-                        // Adicionar navegação aqui se necessário
+                        onNovaViagem()
                     },
                     icon = { Icon(Icons.Default.Flight, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -112,6 +116,7 @@ fun menu(onVoltar: () -> Unit) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text("Bem-vindo ao App de Viagens!")
+                Text("Usuário Logado ID: $userId")
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = onVoltar) {
                     Text("Sair")

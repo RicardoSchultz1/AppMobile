@@ -5,8 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.appfinal.dp.CadastroDao
 import kotlinx.coroutines.launch
-import repository.LoginRepository
 
 data class LoginFormState(
     val email: String = "",
@@ -14,7 +14,7 @@ data class LoginFormState(
     val mensagemErro: String? = null
 )
 
-class LoginViewModel(private val repository: LoginRepository) : ViewModel() {
+class LoginViewModel(private val cadastroDao: CadastroDao) : ViewModel() {
     var uiState by mutableStateOf(LoginFormState())
         private set
 
@@ -26,11 +26,11 @@ class LoginViewModel(private val repository: LoginRepository) : ViewModel() {
         uiState = uiState.copy(senha = novaSenha, mensagemErro = null)
     }
 
-    fun fazerLogin(onSuccess: () -> Unit) {
+    fun fazerLogin(onSuccess: (Int) -> Unit) {
         viewModelScope.launch {
-            val usuario = repository.autenticar(uiState.email, uiState.senha)
+            val usuario = cadastroDao.login(uiState.email, uiState.senha)
             if (usuario != null) {
-                onSuccess()
+                onSuccess(usuario.id)
             } else {
                 uiState = uiState.copy(mensagemErro = "Email ou senha incorretos")
             }

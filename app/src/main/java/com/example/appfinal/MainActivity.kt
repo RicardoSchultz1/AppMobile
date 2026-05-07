@@ -15,11 +15,14 @@ import com.example.appfinal.dp.AppDataBase
 import com.example.appfinal.telas.ModLogin
 import com.example.appfinal.telas.esqueciSenha
 import com.example.appfinal.telas.menu
+import com.example.appfinal.telas.novaViagem
 import com.example.appfinal.telas.novoUsuario
 import com.example.appfinal.ui.theme.AppFInalTheme
 import model.LoginViewModel
 import model.LoginViewModelFactory
-import repository.LoginRepository
+import repository.ViagemRepository
+import viewModel.ViagemViewModel
+import viewModel.ViagemViewModelFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,7 +33,9 @@ class MainActivity : ComponentActivity() {
                 val context = LocalContext.current
                 val db = remember { AppDataBase.getDatabase(context) }
                 val cadastroDao = remember { db.cadastroDao() }
-                val loginRepository = remember { LoginRepository(cadastroDao) }
+                val viagemDao = remember { db.viagemDao() }
+                
+                val viagemRepository = remember { ViagemRepository(viagemDao) }
                 
                 val backStack = remember { mutableStateListOf<Destino>(Destino.login) }
 
@@ -41,11 +46,11 @@ class MainActivity : ComponentActivity() {
                         when (key) {
                             Destino.login -> NavEntry(key) {
                                 val loginViewModel: LoginViewModel = viewModel(
-                                    factory = LoginViewModelFactory(loginRepository)
+                                    factory = LoginViewModelFactory(cadastroDao)
                                 )
                                 ModLogin(
                                     onEsqueciSenhaClick = { backStack.add(Destino.esqueciSenha) },
-                                    onLoginClick = { backStack.add(Destino.menu) },
+                                    onLoginClick = { userId -> backStack.add(Destino.menu(userId)) },
                                     onNovoUsuario = { backStack.add(Destino.novoUsuario) },
                                     viewModel = loginViewModel
                                 )
@@ -55,13 +60,25 @@ class MainActivity : ComponentActivity() {
                                     onVoltar = { backStack.removeLast() }
                                 )
                             }
-                            Destino.menu -> NavEntry(key) {
+                            is Destino.menu -> NavEntry(key) {
                                 menu(
+                                    userId = key.userId,
+                                    onNovaViagem = { backStack.add(Destino.novaViagem(key.userId)) },
                                     onVoltar = { backStack.removeLast() }
                                 )
                             }
                            Destino.novoUsuario -> NavEntry(key) {
                                 novoUsuario(
+                                    onVoltar = { backStack.removeLast() }
+                                )
+                            }
+                            is Destino.novaViagem -> NavEntry(key) {
+                                val viagemViewModel: ViagemViewModel = viewModel(
+                                    factory = ViagemViewModelFactory(viagemRepository)
+                                )
+                                novaViagem(
+                                    userId = key.userId,
+                                    viewModel = viagemViewModel,
                                     onVoltar = { backStack.removeLast() }
                                 )
                             }

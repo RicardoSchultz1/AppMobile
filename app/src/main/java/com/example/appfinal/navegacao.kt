@@ -11,8 +11,11 @@ sealed interface Destino {
     data object esqueciSenha : Destino
 
     @Serializable
-    data object menu : Destino
+    data class menu(val userId: Int) : Destino
 
-   @Serializable
+    @Serializable
     data object novoUsuario : Destino
+
+    @Serializable
+    data class novaViagem(val userId: Int) : Destino
 }
