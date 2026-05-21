@@ -1,14 +1,23 @@
 package viewModel
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.location.Geocoder
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import model.Viagem
 import repository.ViagemRepository
+import java.util.Locale
 
 data class ViagemFormState(
     val id: Int = 0,
@@ -19,7 +28,10 @@ data class ViagemFormState(
     val orcamento: String = "",
     val mensagemErro: String? = null,
     val sucesso: Boolean = false,
-    val listaViagens: List<Viagem> = emptyList()
+    val listaViagens: List<Viagem> = emptyList(),
+    val viagemAtual: Viagem? = null,
+    val cidadeAtual: String? = null,
+    val isLoadingLocation: Boolean = false
 )
 
 class ViagemViewModel(private val repository: ViagemRepository) : ViewModel() {
@@ -107,6 +119,41 @@ class ViagemViewModel(private val repository: ViagemRepository) : ViewModel() {
             }
             uiState = uiState.copy(sucesso = true, id = 0, destino = "", orcamento = "", dataInicio = null, dataFim = null)
             carregarViagens(userId)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    fun buscarLocalizacaoECidade(context: Context, userId: Int) {
+        uiState = uiState.copy(isLoadingLocation = true)
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+        
+        viewModelScope.launch {
+            try {
+                val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
+                if (location != null) {
+                    val cidade = getCityName(context, location.latitude, location.longitude)
+                    uiState = uiState.copy(cidadeAtual = cidade)
+                    if (cidade != null) {
+                        val viagem = repository.buscarViagemAtual(userId, cidade, System.currentTimeMillis())
+                        uiState = uiState.copy(viagemAtual = viagem)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                uiState = uiState.copy(isLoadingLocation = false)
+            }
+        }
+    }
+
+    private suspend fun getCityName(context: Context, lat: Double, lon: Double): String? = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val geocoder = Geocoder(context, Locale.getDefault())
+            @Suppress("DEPRECATION")
+            val addresses = geocoder.getFromLocation(lat, lon, 1)
+            addresses?.firstOrNull()?.locality ?: addresses?.firstOrNull()?.subAdminArea
+        } catch (e: Exception) {
+            null
         }
     }
 }

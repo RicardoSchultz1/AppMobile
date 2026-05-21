@@ -7,6 +7,10 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.13.0"
 kotlin = "2.2.10"
+# KSP must match the Kotlin version prefix
+ksp = "2.2.10-1.0.31"
+# Room 2.7.0+ is required for Kotlin 2.x KSP compatibility
+room = "2.7.0-alpha11"
 composeBom = "2024.09.00"
 nav3Core = "1.0.1"
 lifecycleViewmodelNav3 = "2.11.0-alpha02"
@@ -44,3 +48,4 @@ androidx-compose-animation-core-lint = { group = "androidx.compose.animation", n
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

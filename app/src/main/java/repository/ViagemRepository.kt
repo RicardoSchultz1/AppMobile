@@ -19,4 +19,8 @@ class ViagemRepository(private val viagemDao: ViagemDao) {
     suspend fun listarViagensPorUsuario(userId: Int): List<Viagem> {
         return viagemDao.getViagensByUser(userId)
     }
+
+    suspend fun buscarViagemAtual(userId: Int, cidade: String, dataAtual: Long): Viagem? {
+        return viagemDao.findViagemByCidadeEData(userId, cidade, dataAtual)
+    }
 }

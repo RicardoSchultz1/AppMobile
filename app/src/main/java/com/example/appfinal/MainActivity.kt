@@ -62,8 +62,12 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             is Destino.menu -> NavEntry(key) {
+                                val viagemViewModel: ViagemViewModel = viewModel(
+                                    factory = ViagemViewModelFactory(viagemRepository)
+                                )
                                 menu(
                                     userId = key.userId,
+                                    viewModel = viagemViewModel,
                                     onNovaViagem = { backStack.add(Destino.novaViagem(key.userId)) },
                                     onMinhasViagens = { backStack.add(Destino.minhasViagens(key.userId)) },
                                     onVoltar = { backStack.removeLast() }
