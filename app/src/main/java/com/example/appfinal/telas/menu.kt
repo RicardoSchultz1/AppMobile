@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 fun menu(
     userId: Int,
     onNovaViagem: () -> Unit,
+    onMinhasViagens: () -> Unit,
     onVoltar: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -71,7 +72,7 @@ fun menu(
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
-                        // Adicionar navegação aqui se necessário
+                        onMinhasViagens()
                     },
                     icon = { Icon(Icons.Default.CardTravel, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -84,7 +85,6 @@ fun menu(
                     selected = false,
                     onClick = {
                         scope.launch { drawerState.close() }
-                        // Adicionar navegação aqui se necessário
                     },
                     icon = { Icon(Icons.Default.Info, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)

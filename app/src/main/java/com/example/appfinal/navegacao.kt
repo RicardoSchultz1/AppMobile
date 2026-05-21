@@ -18,4 +18,7 @@ sealed interface Destino {
 
     @Serializable
     data class novaViagem(val userId: Int) : Destino
+
+    @Serializable
+    data class minhasViagens(val userId: Int) : Destino
 }

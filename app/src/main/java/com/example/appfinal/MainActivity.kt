@@ -15,6 +15,7 @@ import com.example.appfinal.dp.AppDataBase
 import com.example.appfinal.telas.ModLogin
 import com.example.appfinal.telas.esqueciSenha
 import com.example.appfinal.telas.menu
+import com.example.appfinal.telas.minhasViagens
 import com.example.appfinal.telas.novaViagem
 import com.example.appfinal.telas.novoUsuario
 import com.example.appfinal.ui.theme.AppFInalTheme
@@ -64,6 +65,7 @@ class MainActivity : ComponentActivity() {
                                 menu(
                                     userId = key.userId,
                                     onNovaViagem = { backStack.add(Destino.novaViagem(key.userId)) },
+                                    onMinhasViagens = { backStack.add(Destino.minhasViagens(key.userId)) },
                                     onVoltar = { backStack.removeLast() }
                                 )
                             }
@@ -79,6 +81,17 @@ class MainActivity : ComponentActivity() {
                                 novaViagem(
                                     userId = key.userId,
                                     viewModel = viagemViewModel,
+                                    onVoltar = { backStack.removeLast() }
+                                )
+                            }
+                            is Destino.minhasViagens -> NavEntry(key) {
+                                val viagemViewModel: ViagemViewModel = viewModel(
+                                    factory = ViagemViewModelFactory(viagemRepository)
+                                )
+                                minhasViagens(
+                                    userId = key.userId,
+                                    viewModel = viagemViewModel,
+                                    onEditarViagem = { backStack.add(Destino.novaViagem(key.userId)) },
                                     onVoltar = { backStack.removeLast() }
                                 )
                             }

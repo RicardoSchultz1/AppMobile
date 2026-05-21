@@ -8,6 +8,14 @@ class ViagemRepository(private val viagemDao: ViagemDao) {
         viagemDao.insert(viagem)
     }
 
+    suspend fun atualizarViagem(viagem: Viagem) {
+        viagemDao.update(viagem)
+    }
+
+    suspend fun excluirViagem(viagem: Viagem) {
+        viagemDao.delete(viagem)
+    }
+
     suspend fun listarViagensPorUsuario(userId: Int): List<Viagem> {
         return viagemDao.getViagensByUser(userId)
     }
