@@ -4,6 +4,7 @@ import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +22,8 @@ import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,6 +36,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
@@ -48,6 +53,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.android.gms.maps.model.CameraPosition
 import kotlinx.coroutines.launch
 import viewModel.ViagemViewModel
 import java.text.SimpleDateFormat
@@ -62,6 +72,7 @@ fun menu(
     viewModel: ViagemViewModel,
     onNovaViagem: () -> Unit,
     onMinhasViagens: () -> Unit,
+    onFotos: (Int) -> Unit,
     onVoltar: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -155,6 +166,25 @@ fun menu(
                         }
                     }
                 )
+            },
+            bottomBar = {
+                val viagem = state.viagemAtual
+                if (viagem != null) {
+                    NavigationBar {
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.Route, contentDescription = null) },
+                            label = { Text("Roteiro") },
+                            selected = false,
+                            onClick = { /* Implementar em outra tarefa */ }
+                        )
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Default.Photo, contentDescription = null) },
+                            label = { Text("Fotos") },
+                            selected = false,
+                            onClick = { onFotos(viagem.id) }
+                        )
+                    }
+                }
             }
         ) { paddingValues ->
             Column(
@@ -239,6 +269,30 @@ fun menu(
                                             style = MaterialTheme.typography.titleMedium,
                                             color = Color.Red
                                         )
+                                    }
+                                }
+                                
+                                // Mapa com a localização atual da viagem
+                                state.localizacaoAtual?.let { pos ->
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    val cameraPositionState = rememberCameraPositionState {
+                                        position = CameraPosition.fromLatLngZoom(pos, 15f)
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(200.dp)
+                                    ) {
+                                        GoogleMap(
+                                            modifier = Modifier.fillMaxSize(),
+                                            cameraPositionState = cameraPositionState
+                                        ) {
+                                            Marker(
+                                                state = MarkerState(position = pos),
+                                                title = "Você está aqui",
+                                                snippet = "Viagem para ${viagem.destino}"
+                                            )
+                                        }
                                     }
                                 }
                             }

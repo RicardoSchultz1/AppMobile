@@ -3,6 +3,7 @@ package viewModel
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Geocoder
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,10 +12,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import model.Foto
 import model.Viagem
 import repository.ViagemRepository
 import java.util.Locale
@@ -31,7 +34,9 @@ data class ViagemFormState(
     val listaViagens: List<Viagem> = emptyList(),
     val viagemAtual: Viagem? = null,
     val cidadeAtual: String? = null,
-    val isLoadingLocation: Boolean = false
+    val isLoadingLocation: Boolean = false,
+    val localizacaoAtual: LatLng? = null,
+    val fotosViagem: List<Foto> = emptyList()
 )
 
 class ViagemViewModel(private val repository: ViagemRepository) : ViewModel() {
@@ -131,8 +136,9 @@ class ViagemViewModel(private val repository: ViagemRepository) : ViewModel() {
             try {
                 val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
                 if (location != null) {
+                    val latLng = LatLng(location.latitude, location.longitude)
                     val cidade = getCityName(context, location.latitude, location.longitude)
-                    uiState = uiState.copy(cidadeAtual = cidade)
+                    uiState = uiState.copy(cidadeAtual = cidade, localizacaoAtual = latLng)
                     if (cidade != null) {
                         val viagem = repository.buscarViagemAtual(userId, cidade, System.currentTimeMillis())
                         uiState = uiState.copy(viagemAtual = viagem)
@@ -154,6 +160,21 @@ class ViagemViewModel(private val repository: ViagemRepository) : ViewModel() {
             addresses?.firstOrNull()?.locality ?: addresses?.firstOrNull()?.subAdminArea
         } catch (e: Exception) {
             null
+        }
+    }
+
+    fun carregarFotos(viagemId: Int) {
+        viewModelScope.launch {
+            val fotos = repository.listarFotosPorViagem(viagemId)
+            uiState = uiState.copy(fotosViagem = fotos)
+        }
+    }
+
+    fun adicionarFoto(viagemId: Int, uri: Uri) {
+        viewModelScope.launch {
+            val novaFoto = Foto(viagemId = viagemId, path = uri.toString())
+            repository.salvarFoto(novaFoto)
+            carregarFotos(viagemId)
         }
     }
 }
