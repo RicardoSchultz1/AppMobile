@@ -24,4 +24,7 @@ sealed interface Destino {
 
     @Serializable
     data class fotos(val viagemId: Int) : Destino
+
+    @Serializable
+    data class roteiro(val viagemId: Int) : Destino
 }

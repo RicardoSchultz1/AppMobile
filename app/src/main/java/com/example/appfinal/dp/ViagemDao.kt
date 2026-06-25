@@ -21,6 +21,9 @@ interface ViagemDao {
     @Query("SELECT * FROM viagens WHERE userId = :userId")
     suspend fun getViagensByUser(userId: Int): List<Viagem>
 
+    @Query("SELECT * FROM viagens WHERE id = :id LIMIT 1")
+    suspend fun getViagemById(id: Int): Viagem?
+
     @Query("""
         SELECT * FROM viagens 
         WHERE userId = :userId 

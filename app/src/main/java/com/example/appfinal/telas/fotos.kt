@@ -1,8 +1,11 @@
 package com.example.appfinal.telas
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Environment
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +27,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -31,13 +35,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import viewModel.ViagemViewModel
@@ -56,44 +61,60 @@ fun Fotos(
     val state = viewModel.uiState
     val context = LocalContext.current
     
-    // URI temporário para a foto capturada
-    var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    // URI temporária para a captura da câmera
+    var tempPhotoUri by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(viagemId) {
         viewModel.carregarFotos(viagemId)
     }
 
-    // Launcher para Galeria
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let {
-            viewModel.adicionarFoto(viagemId, it)
-        }
+        uri?.let { viewModel.adicionarFoto(viagemId, it) }
     }
 
-    // Launcher para Câmera
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            tempPhotoUri?.let { uri ->
-                viewModel.adicionarFoto(viagemId, uri)
-            }
+            tempPhotoUri?.let { viewModel.adicionarFoto(viagemId, Uri.parse(it)) }
         }
     }
 
-    // Função auxiliar para criar arquivo de imagem
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (!isGranted) {
+            Toast.makeText(context, "Permissão da câmera negada.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     fun createImageFile(context: Context): File {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
     }
 
+    fun openCamera() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            try {
+                val file = createImageFile(context)
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                tempPhotoUri = uri.toString()
+                cameraLauncher.launch(uri)
+            } catch (e: Exception) {
+                Toast.makeText(context, "Erro ao preparar câmera.", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Galeria de Fotos") },
+                title = { Text("Galeria da Viagem") },
                 navigationIcon = {
                     IconButton(onClick = onVoltar) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
@@ -103,39 +124,23 @@ fun Fotos(
         },
         floatingActionButton = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                // Botão Câmera
-                FloatingActionButton(onClick = {
-                    try {
-                        val file = createImageFile(context)
-                        val uri = FileProvider.getUriForFile(
-                            context,
-                            "${context.packageName}.fileprovider",
-                            file
-                        )
-                        tempPhotoUri = uri
-                        cameraLauncher.launch(uri)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }) {
-                    Icon(Icons.Default.AddAPhoto, contentDescription = "Tirar Foto")
+                FloatingActionButton(onClick = { openCamera() }) {
+                    Icon(Icons.Default.AddAPhoto, contentDescription = "Câmera")
                 }
-                
-                // Botão Galeria
                 FloatingActionButton(onClick = { galleryLauncher.launch("image/*") }) {
-                    Icon(Icons.Default.PhotoLibrary, contentDescription = "Adicionar da Galeria")
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = "Galeria")
                 }
             }
         }
-    ) { paddingValues ->
+    ) { padding ->
         if (state.fotosViagem.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                Text("Nenhuma foto vinculada a esta viagem.")
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                Text("Nenhuma foto encontrada.")
             }
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -144,9 +149,7 @@ fun Fotos(
                     AsyncImage(
                         model = foto.path,
                         contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp),
+                        modifier = Modifier.fillMaxWidth().height(120.dp),
                         contentScale = ContentScale.Crop
                     )
                 }

@@ -73,6 +73,7 @@ fun menu(
     onNovaViagem: () -> Unit,
     onMinhasViagens: () -> Unit,
     onFotos: (Int) -> Unit,
+    onRoteiro: (Int) -> Unit,
     onVoltar: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -175,7 +176,7 @@ fun menu(
                             icon = { Icon(Icons.Default.Route, contentDescription = null) },
                             label = { Text("Roteiro") },
                             selected = false,
-                            onClick = { /* Implementar em outra tarefa */ }
+                            onClick = { onRoteiro(viagem.id) }
                         )
                         NavigationBarItem(
                             icon = { Icon(Icons.Default.Photo, contentDescription = null) },

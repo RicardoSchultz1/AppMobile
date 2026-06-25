@@ -14,6 +14,7 @@ import com.example.appfinal.dp.AppDataBase
 import com.example.appfinal.telas.ModLogin
 import com.example.appfinal.telas.esqueciSenha
 import com.example.appfinal.telas.Fotos
+import com.example.appfinal.telas.Roteiro
 import com.example.appfinal.telas.menu
 import com.example.appfinal.telas.minhasViagens
 import com.example.appfinal.telas.novaViagem
@@ -21,7 +22,10 @@ import com.example.appfinal.telas.novoUsuario
 import com.example.appfinal.ui.theme.AppFInalTheme
 import model.LoginViewModel
 import model.LoginViewModelFactory
+import repository.RoteiroRepository
 import repository.ViagemRepository
+import viewModel.RoteiroViewModel
+import viewModel.RoteiroViewModelFactory
 import viewModel.ViagemViewModel
 import viewModel.ViagemViewModelFactory
 
@@ -38,6 +42,7 @@ class MainActivity : ComponentActivity() {
                 val fotoDao = remember { db.fotoDao() }
                 
                 val viagemRepository = remember { ViagemRepository(viagemDao, fotoDao) }
+                val roteiroRepository = remember { RoteiroRepository() }
                 
                 val backStack = remember { mutableStateListOf<Destino>(Destino.login) }
 
@@ -71,7 +76,8 @@ class MainActivity : ComponentActivity() {
                                     viewModel = viagemViewModel,
                                     onNovaViagem = { backStack.add(Destino.novaViagem(key.userId)) },
                                     onMinhasViagens = { backStack.add(Destino.minhasViagens(key.userId)) },
-                                    onFotos = { viagemId -> backStack.add(Destino.fotos(viagemId)) },
+                                    onFotos = { id: Int -> backStack.add(Destino.fotos(id)) },
+                                    onRoteiro = { id: Int -> backStack.add(Destino.roteiro(id)) },
                                     onVoltar = { backStack.removeAt(backStack.lastIndex) }
                                 )
                             }
@@ -108,6 +114,16 @@ class MainActivity : ComponentActivity() {
                                 Fotos(
                                     viagemId = key.viagemId,
                                     viewModel = viagemViewModel,
+                                    onVoltar = { backStack.removeAt(backStack.lastIndex) }
+                                )
+                            }
+                            is Destino.roteiro -> NavEntry(key) {
+                                val roteiroViewModel: RoteiroViewModel = viewModel(
+                                    factory = RoteiroViewModelFactory(roteiroRepository, viagemRepository)
+                                )
+                                Roteiro(
+                                    viagemId = key.viagemId,
+                                    viewModel = roteiroViewModel,
                                     onVoltar = { backStack.removeAt(backStack.lastIndex) }
                                 )
                             }

@@ -19,7 +19,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppFInal">
 
-        <!-- Add your Google Maps API Key here -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCOhHSM3luCywfR4j4J9lPzhpbqPd9f-s4" />
@@ -41,10 +40,8 @@
             android:theme="@style/Theme.AppFInal">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
-
 </manifest>
